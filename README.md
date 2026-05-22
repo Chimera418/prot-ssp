@@ -120,7 +120,67 @@ snapshot_download(repo_id="Chimera418/protein-ssp-artifacts", allow_patterns="mo
 
 ---
 
-## 📂 Project Structure
+## 🔧 Run the Full Pipeline Yourself (Train From Scratch)
+
+You are not required to use the pre-trained models or artifacts from the HF Hub. All the phase scripts are included in the repository — you can run the entire pipeline end-to-end on your own machine to generate your own data, embeddings, and trained models from scratch.
+
+> **Hardware note**: Phase 4 (embedding generation for ~9,000 proteins) and Phase 8 (model training) benefit strongly from a GPU. On CPU, Phase 4 alone can take many hours.
+
+### Full pipeline execution order
+
+```bash
+# Phase 1 — Download RCSB PDB sequences and parse raw CSV
+python phase_1_raw_sequences.py
+
+# Phase 2 — Deduplicate, filter, and remove redundant sequences via PISCES
+python phase_2_data_curate.py
+
+# Phase 3 — Match per-residue SST8/SST3 labels from RCSB to curated sequences
+python phase_3_labelled_curated_sequence.py
+
+# Phase 4 — Benchmark 4 protein LLMs, select best (ProtT5), generate full embeddings
+# ⚠️ Requires significant RAM + GPU. Output: embeddings/Rostlab_prot_t5_xl_uniref50.pkl (~9 GB)
+python phase_4_embedding_generation.py
+
+# Phase 5 — Pearson correlation filter: 1024 → 1017 dims, saves keep_indices.pkl
+python phase_5_feature_filtering.py
+
+# Phase 6 — PCA: 1017 → 739 dims, saves pca_model.pkl
+python phase_6_dimensionality_reduction.py
+
+# Phase 7 — ExtraTrees feature selection: 739 → 109 dims, saves feature_selector_mask.pkl
+python phase_7_feature_selection.py
+
+# Phase 7.5 — Second-pass refinement: 109 → 12 dims, saves feature_selector_mask_v2.pkl
+python phase_7_5_feature_refinement.py
+
+# Phase 8 — Train all 5 CNN+BiLSTM+Attention models (one per feature space)
+# Output: models/phase_8_best_model_*.pt
+python phase_8_deep_learning_model.py
+
+# Phase 9 (optional) — SHAP explainability analysis
+python phase_9_explainable_ai.py
+```
+
+After running all phases, your `models/`, `embeddings/`, `data/`, and `raw_data/` directories will be fully populated with your own generated artifacts. You can then run the Streamlit app normally:
+
+```bash
+streamlit run app.py
+```
+
+The app detects locally present model files and skips the HF Hub download entirely.
+
+### Using the CLI predictor (no Streamlit)
+
+If you just want predictions from the command line without opening the web UI:
+
+```bash
+python phase_10_predict.py --sequence "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFD"
+```
+
+---
+
+
 
 ```
 protein-ssp/
