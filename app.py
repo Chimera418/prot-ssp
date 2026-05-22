@@ -170,15 +170,14 @@ INFRA = {
     'Keep indices':        'models/keep_indices.pkl',
 }
 
-# ── Cached resource loaders ───────────────────────────────────────
 def ensure_model_exists(local_path):
+    hf_path = local_path.replace("\\", "/")
     if not os.path.exists(local_path):
         try:
             from huggingface_hub import hf_hub_download
-            filename = os.path.basename(local_path)
-            hf_hub_download(repo_id="Chimera418/protein-ssp-artifacts", filename=filename, local_dir="models")
+            hf_hub_download(repo_id="Chimera418/protein-ssp-artifacts", filename=hf_path, local_dir=".")
         except Exception as e:
-            st.warning(f"Failed to download {filename} from Hugging Face: {e}")
+            st.warning(f"Failed to download {hf_path} from Hugging Face: {e}")
     return local_path
 
 @st.cache_resource(show_spinner="Loading ProtT5 encoder (first time only — ~2 min)…")
