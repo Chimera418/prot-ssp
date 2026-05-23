@@ -42,8 +42,12 @@ def _patch_numpy_pickle_compat():
     # fix for PCA model pickling missing 'scalar' in numpy 2.x
     if not hasattr(_nc, 'scalar'):
         _scalar = getattr(getattr(_nc, 'multiarray', None), 'scalar', None)
-        if _scalar is not None:
-            setattr(_nc, 'scalar', _scalar)
+        if _scalar is None:
+            # Polyfill for unpickling scalars if completely removed
+            def _scalar(dtype, data):
+                import numpy as np
+                return np.frombuffer(data, dtype=dtype)[0]
+        setattr(_nc, 'scalar', _scalar)
 
 _patch_numpy_pickle_compat()
 # ──────────────────────────────────────────────────────────────────
