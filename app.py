@@ -1,6 +1,39 @@
-import os, re, pickle
+import os, re, pickle, sys
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
+
+# ── NumPy 2.x compatibility shim ──────────────────────────────────
+# Old sklearn/numpy pickles reference `numpy._core` which was the private
+# internal module name used in NumPy <2.0.  In NumPy 2.x the public API
+# lives in `numpy._core` but the old pickle paths still point to the
+# legacy `numpy.core` namespace.  Inject both aliases so unpickling works
+# regardless of which NumPy version created the pickle.
+try:
+    import numpy.core as _np_core
+    if not hasattr(np, '_core'):
+        np._core = _np_core           # numpy <2 installed on top of numpy 2 shim
+except AttributeError:
+    pass
+
+try:
+    # When running numpy >=2, _core exists but old pickles may reference
+    # numpy.core.numeric directly — ensure it is importable.
+    import numpy._core  # noqa: F401
+except (ImportError, ModuleNotFoundError):
+    pass
+
+# Ensure `numpy.core` is always importable as an alias for `numpy._core`
+if 'numpy.core' not in sys.modules:
+    try:
+        import numpy._core as _nc
+        sys.modules['numpy.core'] = _nc
+        sys.modules.setdefault('numpy.core.numeric', getattr(_nc, 'numeric', _nc))
+        sys.modules.setdefault('numpy.core.multiarray', getattr(_nc, 'multiarray', _nc))
+        sys.modules.setdefault('numpy.core.umath', getattr(_nc, 'umath', _nc))
+        sys.modules.setdefault('numpy.core.fromnumeric', getattr(_nc, 'fromnumeric', _nc))
+    except Exception:
+        pass
+# ──────────────────────────────────────────────────────────────────
 import pandas as pd
 import torch
 import torch.nn as nn
