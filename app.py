@@ -39,6 +39,12 @@ def _patch_numpy_pickle_compat():
     sys.modules.setdefault('numpy.core',  _nc)
     sys.modules.setdefault('numpy._core', _nc)
 
+    # fix for PCA model pickling missing 'scalar' in numpy 2.x
+    if not hasattr(_nc, 'scalar'):
+        _scalar = getattr(getattr(_nc, 'multiarray', None), 'scalar', None)
+        if _scalar is not None:
+            setattr(_nc, 'scalar', _scalar)
+
 _patch_numpy_pickle_compat()
 # ──────────────────────────────────────────────────────────────────
 
@@ -560,16 +566,32 @@ if predict_btn:
     prog.progress(100, text="Done!")
     prog.empty()
 
+    st.session_state['results'] = {
+        'raw': raw,
+        'mode': mode,
+        'emb': emb,
+        'preds': preds,
+        'probs': probs
+    }
+
+# ── Results ──────────────────────────────────────────────────
+current_raw = sequence.strip().upper().replace(" ","").replace("\n","")
+if 'results' in st.session_state and st.session_state['results']['raw'] == current_raw and st.session_state['results']['mode'] == mode:
+    res = st.session_state['results']
+    raw = res['raw']
+    emb = res['emb']
+    preds = res['preds']
+    probs = res['probs']
+
     mean_conf = float(probs.max(axis=1).mean())
     badge_cls = {
         'direct': 'badge-direct', 'filtered': 'badge-filtered', 'pca': 'badge-pca',
         'selected_v1': 'badge-selected', 'selected_v2': 'badge-selected',
     }[mode]
 
-    # ── Results ──────────────────────────────────────────────────
     st.markdown("---")
     st.markdown(
-        f"## Results · {cfg['label']} "
+        f"## Results · {MODE_CONFIG[mode]['label']} "
         f"<span class='{badge_cls}'>{mode.upper()}</span>",
         unsafe_allow_html=True,
     )
