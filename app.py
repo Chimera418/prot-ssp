@@ -72,43 +72,70 @@ st.set_page_config(
 # ── CSS ───────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html, body, .stApp { background:#0d1117; color:#e6edf3; font-family:'Inter',sans-serif; }
+html, body, .stApp {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Inter', sans-serif;
+}
 
-h1,h2,h3 { color:#e6edf3 !important; }
+h1, h2, h3 { color: #e6edf3 !important; letter-spacing: -0.02em; }
 
 /* Sidebar */
-[data-testid="stSidebar"] { background:#161b22 !important; border-right:1px solid #30363d; }
-[data-testid="stSidebar"] * { color:#e6edf3 !important; }
+[data-testid="stSidebar"] {
+    background: #161b22 !important;
+    border-right: 1px solid #21262d;
+}
+[data-testid="stSidebar"] * { color: #e6edf3 !important; }
 
 /* Cards */
-.card { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:20px; margin:8px 0; }
-.card-accent { border-color:#7c3aed; background:#1a1130; }
+.card {
+    background: rgba(22, 27, 34, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid #21262d;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 8px 0;
+}
+.card-accent { border-color: #7c3aed; }
 
-/* Mode badge */
-.badge-direct   { background:#0d4429; color:#3fb950; border-radius:6px; padding:2px 10px; font-size:12px; font-weight:600; }
-.badge-filtered { background:#0e3d4a; color:#39d4d4; border-radius:6px; padding:2px 10px; font-size:12px; font-weight:600; }
-.badge-pca      { background:#0c2d6b; color:#58a6ff; border-radius:6px; padding:2px 10px; font-size:12px; font-weight:600; }
-.badge-selected { background:#3d1f00; color:#f0883e; border-radius:6px; padding:2px 10px; font-size:12px; font-weight:600; }
+/* Mode badges */
+.badge-direct   { background: #0d4429; color: #3fb950; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+.badge-filtered { background: #0e3a47; color: #39d4d4; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+.badge-pca      { background: #161f6e; color: #79c0ff; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+.badge-selected { background: #3a1f00; color: #f0883e; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
 
 /* Sequence display */
-.seq-wrap { font-family:'JetBrains Mono',monospace; font-size:15px; line-height:2.4;
-            background:#0d1117; border-radius:10px; padding:16px; border:1px solid #30363d; }
-.res-H { background:#e63946; color:#fff; padding:0 3px; border-radius:3px; }
-.res-E { background:#457b9d; color:#fff; padding:0 3px; border-radius:3px; }
-.res-C { background:#2a9d8f; color:#fff; padding:0 3px; border-radius:3px; }
-.pos   { color:#484f58; font-size:11px; margin-right:6px; }
+.seq-wrap {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 2.2;
+    background: #010409;
+    border-radius: 8px;
+    padding: 16px 20px;
+    border: 1px solid #21262d;
+}
+.res-H { background: #da3633; color: #fff; padding: 1px 4px; border-radius: 3px; }
+.res-E { background: #1f6feb; color: #fff; padding: 1px 4px; border-radius: 3px; }
+.res-C { background: #1a7f37; color: #fff; padding: 1px 4px; border-radius: 3px; }
+.pos   { color: #484f58; font-size: 10px; margin-right: 8px; }
 
 /* Metrics */
-.metric-box { background:#161b22; border:1px solid #30363d; border-radius:10px;
-              padding:18px 14px; text-align:center; }
-.metric-val { font-size:2rem; font-weight:800; }
-.metric-lbl { color:#8b949e; font-size:0.8rem; margin-top:4px; }
+.metric-box {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    padding: 16px 14px;
+    text-align: center;
+}
+.metric-val { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; }
+.metric-lbl { color: #8b949e; font-size: 0.72rem; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* Status icons */
-.ok  { color:#3fb950; }
-.err { color:#f85149; }
+.ok  { color: #3fb950; }
+.err { color: #f85149; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -440,19 +467,6 @@ with st.sidebar:
     )
     st.caption(cfg['pipeline'])
 
-    st.markdown("---")
-    st.markdown("### 📊 Model Comparison")
-    cmp = pd.DataFrame([
-        {
-            'Mode': MODE_CONFIG[m]['label'].replace(' ★ Best', ''),
-            'Dims': MODE_CONFIG[m]['dims'],
-            'Q3': MODE_CONFIG[m]['q3'],
-            'F1': MODE_CONFIG[m]['f1'],
-            'AUC': MODE_CONFIG[m]['auc'],
-        }
-        for m in MODE_ORDER
-    ])
-    st.dataframe(cmp, hide_index=True, use_container_width=True)
 
     st.markdown("---")
     st.markdown("### 📦 Artifact Status")
